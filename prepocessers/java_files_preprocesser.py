@@ -3,11 +3,12 @@ from os.path import isfile, join
 
 
 if __name__ == '__main__':
-    dirname = '/home/katyakos/Briksin_projects/data/train/presto'
+    dirname = '/home/ec2-user/subtoken_embedding/data/java-small/training/'
     fs = []
+    oi = 0
     for (dirpath, dirnames, filenames) in walk(dirname):
-        fs.extend([join(dirname, f) for f in filenames])
-    with open('/home/katyakos/Briksin_projects/data/result/java/short_preprocessed.java', 'w') as fout:
+        fs.extend([join(dirpath, f) for f in filenames])
+    with open('/home/ec2-user/subtoken_embedding/data/java-small/result/java/preprocessed_java_small.java', 'w') as fout:
         script = ''
         for filename in fs:
             with open(filename) as fin:
