@@ -3,19 +3,23 @@ import torch
 import time
 from models.astnn.model import BatchProgramClassifier
 from torch.autograd import Variable
+from gensim.models.word2vec import Word2Vec
 import os
+import numpy as np
+
 
 
 class ASTNN:
 
     def __init__(self, config):
         self.config = config
-        if config.LOAD_PATH is None:
-            self.model = BatchProgramClassifier(config.EMBEDDING_DIM, config.HIDDEN_DIM, config.MAX_TOKENS + 1,
-                                                config.ENCODE_DIM, config.LABELS, config.BATCH_SIZE,
-                                                config.USE_GPU, config.embeddings)
-        else:
-            self.model = torch.load(os.path.join(config.LOAD_PATH, 'astnn_model.pt'))
+        self.model = BatchProgramClassifier(config.EMBEDDING_DIM, config.HIDDEN_DIM, config.MAX_TOKENS + 1,
+                                            config.ENCODE_DIM, config.LABELS, config.BATCH_SIZE,
+                                            config.USE_GPU, config.embeddings)
+        if config.LOAD_PATH:
+            checkpoint = torch.load(os.path.join(config.LOAD_PATH, 'astnn_checkpoint.tar'))
+            #self.model = torch.load(os.path.join(config.LOAD_PATH, 'astnn_model.pt'))
+            self.model.load_state_dict(checkpoint['model_state_dict'])
 
         if config.USE_GPU:
             self.model.cuda()
@@ -25,7 +29,7 @@ class ASTNN:
         self.loss_function = torch.nn.CrossEntropyLoss()
 
         if config.LOAD_PATH:
-            checkpoint = torch.load(os.path.join(config.LOAD_PATH, 'astnn_checkpoint.tar'))
+            #checkpoint = torch.load(os.path.join(config.LOAD_PATH, 'astnn_checkpoint.tar'))
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.loss_function.load_state_dict(checkpoint['loss_state_dict'])
 
@@ -50,7 +54,7 @@ class ASTNN:
             if self.config.USE_GPU:
                 inputs, labels = inputs, labels.cuda()
 
-            if is_train == 'train':
+            if is_train:
                 self.model.zero_grad()
             self.model.batch_size = len(labels)
             self.model.hidden = self.model.init_hidden()
@@ -106,8 +110,9 @@ class ASTNN:
         print("Testing results(Acc):", total_acc / total)
 
         print('Saving model')
-        torch.save(self.model, os.path.join(self.config.SAVE_PATH, 'astnn_model.pt'))
+        #torch.save(self.model, os.path.join(self.config.SAVE_PATH, 'astnn_model.pt'))
         torch.save({
+            'model_state_dict': self.model.state_dict(),
             'loss_state_dict': self.loss_function.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'test_loss': total_loss / total,

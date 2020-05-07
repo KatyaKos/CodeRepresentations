@@ -2,8 +2,9 @@ from argparse import ArgumentParser
 import numpy as np
 import tensorflow as tf
 import os
-
-from models import astnn
+import sys
+sys.path.append('/home/ec2-user/research/MLSE')
+print(sys.path)
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -29,18 +30,22 @@ if __name__ == '__main__':
     config, model = None, None
 
     if args.model_type == "astnn":
-        config = astnn.config.Config.get_default_config(args)
+        from models.astnn import config, pipeline, astnn
+
         if args.raw_data_path is not None:
-            pipe = astnn.pipeline.Pipeline(config)
+            conf = config.Config.get_pipeline_config(args)
+            pipe = pipeline.Pipeline(conf)
             pipe.run()
-            if args.evaluate or args.predict is not None:
-                config.DATA_PATH = os.path.join(pipe.dest, 'test_blocks.pkl')
-        model = astnn.astnn.ASTNN(config)
+            if args.evaluate or args.predict_path is not None:
+                args.DATA_PATH = os.path.join(pipe.dest, 'test_blocks.pkl')
+       
+        conf = config.Config.get_model_config(args)
+        model = astnn.ASTNN(conf)
 
     print('Created model')
     if args.evaluate:
         model.evaluate()
-    if args.predict is not None:
+    if args.predict_path is not None:
         model.predict()
     else:
         model.train()
