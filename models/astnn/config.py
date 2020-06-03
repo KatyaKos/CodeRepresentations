@@ -7,7 +7,6 @@ class Config:
     @staticmethod
     def get_model_config(args):
         config = Config(args)
-        config.SPLIT_RATIO = "3:1:1"
         config.HIDDEN_DIM = 100
         config.ENCODE_DIM = 128
         config.LABELS = 104
@@ -18,27 +17,35 @@ class Config:
         return config
 
     @staticmethod
-    def get_pipeline_config(args):
+    def get_preprocess_config(args):
         config = Config(args)
-        config.SPLIT_RATIO = "3:1:1"
+        config.SPLIT_RATIO = [3, 1, 1]
+        config.EMBEDDING_DIM = 128
+        config.MIN_COUNT = 3
         return config
 
     def __init__(self, args):
-        self.SPLIT_RATIO = "1:1:1"
+        self.SPLIT_RATIO = [1, 0, 0]
         self.HIDDEN_DIM = 0
         self.ENCODE_DIM = 0
+        self.EMBEDDING_DIM = 0
+        self.MAX_TOKENS = 0
+        self.MIN_COUNT = 0
         self.LABELS = 0
         self.EPOCHS = 0
         self.BATCH_SIZE = 0
         self.USE_GPU = False
 
-        self.RAW_DATA_PATH = args.raw_data_path
         self.DATA_PATH = args.data_path
-        self.SAVE_PATH = args.save_path if args.save_path is not None else args.data_path
+        self.EMBEDDING_PATH = args.embed_path
+        self.SAVE_PATH = args.save_path if args.save_path is not None else self.DATA_PATH
         self.LOAD_PATH = args.load_path
+        self.RAW_DATA_PATH = args.raw_data_path
+        self.LOGDIR = args.logdir
+        self.PREDICT_PATH = args.predict_path
 
     def extract_embedding(self):
-        word2vec = Word2Vec.load(os.path.join(self.DATA_PATH, 'embedding/node_w2v_128')).wv
+        word2vec = Word2Vec.load(self.EMBEDDING_PATH).wv
         
         self.MAX_TOKENS = word2vec.syn0.shape[0]
         self.EMBEDDING_DIM = word2vec.syn0.shape[1]

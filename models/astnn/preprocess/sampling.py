@@ -1,16 +1,8 @@
-from pycparser import c_parser, c_ast
-import pandas as pd
-import os
-import re
-import sys
-from gensim.models.word2vec import Word2Vec
-import pickle
-from models.astnn.tree import ASTNode, SingleNode
-import numpy as np
+from models.astnn.preprocess.tree import ASTNode
 
 
 def get_sequences(node, sequence):
-    current = SingleNode(node)
+    current = ASTNode(node)
     sequence.append(current.get_token())
     for _, child in node.children():
         get_sequences(child, sequence)
