@@ -83,6 +83,7 @@ class BatchTreeEncoder(nn.Module):
     def __init__(self, vocab_size, embedding_dim, encode_dim, batch_size, use_gpu, pretrained_weight=None):
         super(BatchTreeEncoder, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding_dim = embedding_dim
         self.encode_dim = encode_dim
         self.W_c = nn.Linear(embedding_dim, encode_dim)
         self.W_l = nn.Linear(encode_dim, encode_dim)

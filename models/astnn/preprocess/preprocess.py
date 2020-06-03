@@ -93,7 +93,7 @@ class PreprocessPipeline:
 
         w2v = Word2Vec(corpus, size=self.config.EMBEDDING_DIM,
                        workers=16, sg=1, min_count=self.config.MIN_COUNT)
-        self.word2vec = w2v
+        self.word2vec = w2v.wv
         w2v.save(self.embed_path)
 
     # generate block sequences with index representations
@@ -103,7 +103,7 @@ class PreprocessPipeline:
             return
 
         from models.astnn.preprocess.sampling import get_blocks
-        vocab = self.word2vec.wv.vocab
+        vocab = self.word2vec.vocab
         max_token = self.word2vec.syn0.shape[0]
 
         def tree_to_index(node):
