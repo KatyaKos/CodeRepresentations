@@ -108,7 +108,7 @@ class BatchTreeEncoder(nn.Module):
         size = len(node)
         if not size:
             return None
-        batch_current = self.create_tensor(Variable(torch.zeros(size, self.encode_dim)))
+        #batch_current = self.create_tensor(Variable(torch.zeros(size, self.encode_dim)))
 
         index, children_index = [], []
         current_node, children = [], []
@@ -129,7 +129,8 @@ class BatchTreeEncoder(nn.Module):
             else:
                 batch_index[i] = -1
 
-        batch_current = self.W_c(batch_current.index_copy(0, Variable(self.th.LongTensor(index)),
+        tmp_current = self.create_tensor(Variable(torch.zeros(size, self.embedding_dim)))
+        batch_current = self.W_c(tmp_current.index_copy(0, Variable(self.th.LongTensor(index)),
                                                           self.embedding(Variable(self.th.LongTensor(current_node)))))
 
         for c in range(len(children)):

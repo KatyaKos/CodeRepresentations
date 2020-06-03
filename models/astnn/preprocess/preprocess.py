@@ -6,7 +6,6 @@ import os
 class PreprocessPipeline:
     def __init__(self, config):
         self.dest = config.DATA_PATH
-        self.holdout_files = [os.path.join(self.dest, file) for file in ['train_.pkl', 'dev_.pkl', 'test_.pkl']]
         self.data = config.RAW_DATA_PATH
         self.embed_path = config.EMBEDDING_PATH
         self.config = config
@@ -36,16 +35,17 @@ class PreprocessPipeline:
         self.sources = source
 
     # split data for training, developing and testing
-    def split_data(self, option='existing'):
+    def split_data(self, output_files, option='existing'):
+        paths = [os.path.join(self.dest, file) for file in output_files]
         if option is 'existing':
             flag = True
-            for file in self.holdout_files:
+            for file in paths:
                 if not os.path.exists(file):
                     flag = False
             if flag:
-                self.train_data = pd.read_pickle(self.holdout_files[0])
-                self.val_data = pd.read_pickle(self.holdout_files[1])
-                self.test_data = pd.read_pickle(self.holdout_files[2])
+                self.train_data = pd.read_pickle(paths[0])
+                self.val_data = pd.read_pickle(paths[1])
+                self.test_data = pd.read_pickle(paths[2])
                 print("Source code is already splitted, nothing to do.")
                 return
 
@@ -60,9 +60,11 @@ class PreprocessPipeline:
         test = data.iloc[val_split:] 
 
         self.train_data = train
-        train.to_pickle(self.holdout_files[0])
-        dev.to_pickle(self.holdout_files[1])
-        test.to_pickle(self.holdout_files[2])
+        self.val_data = dev
+        self.test_data = test
+        train.to_pickle(paths[0])
+        dev.to_pickle(paths[1])
+        test.to_pickle(paths[2])
 
     # construct dictionary and train word embedding
     def dictionary_and_embedding(self, input_file, option='existing'):
@@ -101,7 +103,7 @@ class PreprocessPipeline:
             return
 
         from models.astnn.preprocess.sampling import get_blocks
-        vocab = self.word2vec.vocab
+        vocab = self.word2vec.wv.vocab
         max_token = self.word2vec.syn0.shape[0]
 
         def tree_to_index(node):
@@ -127,14 +129,14 @@ class PreprocessPipeline:
     # run for processing data to train
     def run(self):
         print('parse source code...')
-        self.parse_source('ast.pkl')
+        self.parse_source(self.config.AST_FILE)
         print('split data...')
-        self.split_data()
+        self.split_data(self.config.HOLDOUT_FILES)
         print('train word embedding...')
         self.dictionary_and_embedding(None)
         print('generate block sequences...')
-        self.generate_block_seqs(self.train_data, 'train_blocks.pkl')
-        self.generate_block_seqs(self.val_data, 'val_blocks.pkl')
-        self.generate_block_seqs(self.test_data, 'test__blocks.pkl')
+        self.generate_block_seqs(self.train_data, self.config.HOLDOUT_BLOCK_FILES[0])
+        self.generate_block_seqs(self.val_data, self.config.HOLDOUT_BLOCK_FILES[1])
+        self.generate_block_seqs(self.test_data, self.config.HOLDOUT_BLOCK_FILES[2])
         print("preprocessing finished!")
 

@@ -25,7 +25,6 @@ class Config:
         return config
 
     def __init__(self, args):
-        self.SPLIT_RATIO = [1, 0, 0]
         self.HIDDEN_DIM = 0
         self.ENCODE_DIM = 0
         self.EMBEDDING_DIM = 0
@@ -35,10 +34,14 @@ class Config:
         self.EPOCHS = 0
         self.BATCH_SIZE = 0
         self.USE_GPU = False
+        self.SPLIT_RATIO = [1, 0, 0]
+        self.AST_FILE = 'ast.pkl'
+        self.HOLDOUT_FILES = ['train.pkl', 'val.pkl', 'test.pkl']
+        self.HOLDOUT_BLOCK_FILES = ['train_blocks.pkl', 'val_blocks.pkl', 'test_blocks.pkl']
 
         self.DATA_PATH = args.data_path
         self.EMBEDDING_PATH = args.embed_path
-        self.SAVE_PATH = args.save_path if args.save_path is not None else self.DATA_PATH
+        self.SAVE_PATH = args.save_path if args.save_path is not None else self.DATA_PATH + 'astnn_checkpoint.tar'
         self.LOAD_PATH = args.load_path
         self.RAW_DATA_PATH = args.raw_data_path
         self.LOGDIR = args.logdir

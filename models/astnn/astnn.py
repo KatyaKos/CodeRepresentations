@@ -17,7 +17,7 @@ class ASTNN:
                                             config.ENCODE_DIM, config.LABELS, config.BATCH_SIZE,
                                             config.USE_GPU, config.embeddings)
         if config.LOAD_PATH:
-            checkpoint = torch.load(os.path.join(config.LOAD_PATH, 'astnn_checkpoint.tar'))
+            checkpoint = torch.load(config.LOAD_PATH)
             #self.model = torch.load(os.path.join(config.LOAD_PATH, 'astnn_model.pt'))
             self.model.load_state_dict(checkpoint['model_state_dict'])
 
@@ -74,9 +74,9 @@ class ASTNN:
         return total_loss, total_acc.item(), total
 
     def train(self):
-        train_data = pd.read_pickle(os.path.join(self.config.DATA_PATH, 'train_blocks.pkl'))
-        val_data = pd.read_pickle(os.path.join(self.config.DATA_PATH, 'dev_blocks.pkl'))
-        test_data = pd.read_pickle(os.path.join(self.config.DATA_PATH, 'test_blocks.pkl'))
+        train_data = pd.read_pickle(os.path.join(self.config.DATA_PATH, self.config.HOLDOUT_BLOCK_FILES[0]))
+        val_data = pd.read_pickle(os.path.join(self.config.DATA_PATH, self.config.HOLDOUT_BLOCK_FILES[1]))
+        test_data = pd.read_pickle(os.path.join(self.config.DATA_PATH, self.config.HOLDOUT_BLOCK_FILES[2]))
 
         train_loss_ = []
         val_loss_ = []
@@ -116,7 +116,7 @@ class ASTNN:
             'loss_state_dict': self.loss_function.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'test_loss': total_loss / total,
-        }, os.path.join(self.config.SAVE_PATH, 'astnn_checkpoint.tar'))
+        }, self.config.SAVE_PATH)
 
     def evaluate(self):
         data = pd.read_pickle(self.config.DATA_PATH)
