@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import numpy as np
 import tensorflow as tf
 import sys
-sys.path.append('/home/katyakos/Briksin_projects/MLSE')
+#sys.path.append('/home/katyakos/Briksin_projects/MLSE')
 
 
 if __name__ == '__main__':
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     parser.add_argument("--raw_data", dest="raw_data_path",
                         help="path to raw data, needed to be preprocessed", metavar="FILE", required=False)
     parser.add_argument("--logdir", dest="logdir",
-                        help="path to logs", metavar="FILE", required=False)
+                        help="path to logs", metavar="FILE", required=True)
     parser.add_argument("--predict_path", dest="predict_path",
                         help="path to save predictions", metavar="FILE", required=False)
     parser.add_argument("-m", "--model", dest="model_type",
@@ -44,6 +44,16 @@ if __name__ == '__main__':
         else:
             conf = config.Config.get_model_config(args)
             model = astnn.ASTNN(conf)
+    elif args.model_type == "tbcnn":
+        from models.tbcnn import config, tbcnn
+        from models.tbcnn.preprocess import preprocess
+
+        if args.preprocess:
+            conf = config.Config.get_preprocess_config(args)
+            preprocess_pipe = preprocess.PreprocessPipeline(conf)
+        else:
+            conf = config.Config.get_model_config(args)
+            model = tbcnn.TBCNN(conf)
 
     print('Created model')
     if args.preprocess:
