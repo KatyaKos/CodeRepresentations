@@ -21,6 +21,8 @@ class TBCNN:
 
         with open(self.config.DATA_PATH, 'rb') as fh:
             trees, _, labels = pickle.load(fh)
+            labels = [str(l) for l in labels]
+            trees = [{'tree': t['tree'], 'label': str(t['label'])} for t in trees]
 
         with open(self.config.EMBEDDING_PATH, 'rb') as fh:
             embeddings, embed_lookup = pickle.load(fh)
@@ -71,17 +73,13 @@ class TBCNN:
                     }
                 )
 
-                print('Epoch:', epoch,
-                      'Step:', step,
-                      'Loss:', err,
-                      'Max nodes:', len(nodes[0])
-                      )
-
                 writer.add_summary(summary, step)
                 if step % self.config.CHECKPOINT_STEP == 0:
                     # save state so we can resume later
                     saver.save(sess, os.path.join(checkfile), step)
                     print('Checkpoint saved.')
+
+            print('Epoch:', epoch, 'Step:', step, 'Loss:', err)
 
         saver.save(sess, os.path.join(checkfile), step)
 
@@ -103,6 +101,9 @@ class TBCNN:
             predictions.append(np.argmax(output))
 
         target_names = list(labels)
+
+        #tmp = [(t1, t2) for t1, t2 in zip(correct_labels[:30], predictions[:30])]
+        #print(tmp)
         print('Accuracy:', accuracy_score(correct_labels, predictions))
         print(classification_report(correct_labels, predictions, target_names=target_names))
         print(confusion_matrix(correct_labels, predictions))

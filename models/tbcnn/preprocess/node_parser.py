@@ -17,10 +17,11 @@ def parse_nodes(root):
 def _create_samples(node):
     """Convert a node's children into a sample points."""
     samples = []
+    node_name = _name(node)
     for _, child in node.children():
         sample = [
             _name(child),
-            _name(node),
+            node_name,
             [_name(x[1]) for x in child.children()]
         ]
         samples.append(sample)

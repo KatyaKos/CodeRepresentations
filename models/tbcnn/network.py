@@ -6,7 +6,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
 
-def init_net(feature_size, label_size):
+def init_net(feature_size, label_size, hidden_size = 200):
     """Initialize an empty network."""
 
     with tf.name_scope('inputs'):
@@ -14,10 +14,10 @@ def init_net(feature_size, label_size):
         children = tf.placeholder(tf.int32, shape=(None, None, None), name='children')
 
     with tf.name_scope('network'):
-        conv1 = conv_layer(1, 100, nodes, children, feature_size)
+        conv1 = conv_layer(1, hidden_size, nodes, children, feature_size)
         #conv2 = conv_layer(1, 10, conv1, children, 100)
         pooling = pooling_layer(conv1)
-        hidden = hidden_layer(pooling, 100, label_size)
+        hidden = hidden_layer(pooling, hidden_size, label_size)
 
     with tf.name_scope('summaries'):
         tf.summary.scalar('tree_size', tf.shape(nodes)[1])
