@@ -8,12 +8,12 @@ def gen_samples(trees, labels, vectors, vector_lookup):
     # encode labels as one-hot vectors
     label_lookup = {label: _onehot(i, len(labels)) for i, label in enumerate(labels)}
 
-    for tree in trees:
+    for root, label in zip(trees['code'], trees['label']):
         nodes = []
         children = []
-        label = label_lookup[tree['label']]
+        label = label_lookup[label]
 
-        queue = [(tree['tree'], -1)]
+        queue = [(root, -1)]
         while queue:
             node, parent_ind = queue.pop(0)
             node_ind = len(nodes)

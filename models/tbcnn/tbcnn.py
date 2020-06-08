@@ -2,165 +2,148 @@
 https://arxiv.org/pdf/1409.5718.pdf"""
 
 import os
-import pickle
+import time
+
 import numpy as np
 import models.tbcnn.network as network
 import models.tbcnn.sampling as sampling
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
+from models.model import CodeRepresentationModel
 
-class TBCNN:
 
+class TBCNN(CodeRepresentationModel):
     def __init__(self, config):
-        self.config = config
+        super().__init__(config)
+        # build the inputs and outputs of the network
+        self.nodes_node, self.children_node, self.hidden_node = network.init_net(
+            self.embedding_size,
+            self.labels_size,
+            config.HIDDEN_SIZE
+        )
+        self.out_node = network.out_layer(self.hidden_node)
+        self.labels_node, self.loss_node = None, None
+        self.sess = tf.Session()
+        self.sess.run(tf.global_variables_initializer())
+
 
     def train(self):
         """Train a classifier to label ASTs"""
-
-        with open(self.config.DATA_PATH, 'rb') as fh:
-            trees, _, labels = pickle.load(fh)
-            labels = [str(l) for l in labels]
-            trees = [{'tree': t['tree'], 'label': str(t['label'])} for t in trees]
-
-        with open(self.config.EMBEDDING_PATH, 'rb') as fh:
-            embeddings, embed_lookup = pickle.load(fh)
-            num_feats = len(embeddings[0])
-
         # build the inputs and outputs of the network
-        nodes_node, children_node, hidden_node = network.init_net(
-            num_feats,
-            len(labels)
-        )
-
-        out_node = network.out_layer(hidden_node)
-        labels_node, loss_node = network.loss_layer(hidden_node, len(labels))
-
+        self.labels_node, self.loss_node = network.loss_layer(self.hidden_node, self.labels_size)
         optimizer = tf.train.AdamOptimizer(self.config.LEARN_RATE)
-        train_step = optimizer.minimize(loss_node)
+        train_step = optimizer.minimize(self.loss_node)
+        tf.summary.scalar('loss', self.loss_node)
 
-        tf.summary.scalar('loss', loss_node)
-
-        ### init the graph
-        sess = tf.Session()  # config=tf.ConfigProto(device_count={'GPU':0}))
-        sess.run(tf.global_variables_initializer())
-
+        # init the graph
         with tf.name_scope('saver'):
             saver = tf.train.Saver()
             summaries = tf.summary.merge_all()
-            writer = tf.summary.FileWriter(self.config.LOGDIR, sess.graph)
+            writer = tf.summary.FileWriter(self.config.SAVE_PATH, self.sess.graph)
 
-        checkfile = os.path.join(self.config.LOGDIR, 'cnn_tree.ckpt')
+        checkfile = os.path.join(self.config.SAVE_PATH, 'cnn_tree.ckpt')
 
-        num_batches = len(trees) // self.config.BATCH_SIZE + (1 if len(trees) % self.config.BATCH_SIZE != 0 else 0)
-        for epoch in range(1, self.config.EPOCHS + 1):
-            for i, batch in enumerate(sampling.batch_samples(
-                    sampling.gen_samples(trees, labels, embeddings, embed_lookup), self.config.BATCH_SIZE
-            )):
-                nodes, children, batch_labels = batch
-                step = (epoch - 1) * num_batches + i * self.config.BATCH_SIZE
+        train_loss_, val_loss_, train_acc_, val_acc_ = [], [], [], []
+        best_acc = 0.0
+        print('Start training...')
+        best_sess = self.sess
+        for epoch in range(self.config.EPOCHS):
+            start_time = time.time()
 
-                if not nodes:
-                    continue  # don't try to train on an empty batch
+            total_loss, total_acc, total = self._train_epoch(self.train_data, train_step, summaries, writer, epoch)
+            train_loss_.append(total_loss / total)
+            train_acc_.append(total_acc / total)
 
-                _, summary, err, out = sess.run(
-                    [train_step, summaries, loss_node, out_node],
-                    feed_dict={
-                        nodes_node: nodes,
-                        children_node: children,
-                        labels_node: batch_labels
-                    }
-                )
+            total_loss, total_acc, total = self._train_epoch(self.val_data, train_step, summaries, writer, epoch)
+            val_loss_.append(total_loss / total)
+            val_acc_.append(total_acc / total)
 
-                writer.add_summary(summary, step)
-                if step % self.config.CHECKPOINT_STEP == 0:
-                    # save state so we can resume later
-                    saver.save(sess, os.path.join(checkfile), step)
-                    print('Checkpoint saved.')
+            end_time = time.time()
+            if total_acc / total > best_acc:
+                best_sess = self.sess
+            print('[Epoch: %3d/%3d] Training Loss: %.4f, Validation Loss: %.4f,'
+                  ' Training Acc: %.3f, Validation Acc: %.3f, Time Cost: %.3f s'
+                  % (epoch + 1, self.config.EPOCHS, train_loss_[epoch], val_loss_[epoch],
+                     train_acc_[epoch], val_acc_[epoch], end_time - start_time))
 
-            print('Epoch:', epoch, 'Step:', step, 'Loss:', err)
+            saver.save(self.sess, os.path.join(checkfile), epoch)
 
-        saver.save(sess, os.path.join(checkfile), step)
+        self.sess = best_sess
+        saver.save(self.sess, os.path.join(checkfile), self.config.EPOCHS)
 
-        # compute the training accuracy
-        correct_labels = []
-        predictions = []
-        print('Computing training accuracy...')
-        for batch in sampling.batch_samples(
-                sampling.gen_samples(trees, labels, embeddings, embed_lookup), 1
-        ):
-            nodes, children, batch_labels = batch
-            output = sess.run([out_node],
-                              feed_dict={
-                                  nodes_node: nodes,
-                                  children_node: children,
-                              }
-                              )
-            correct_labels.append(np.argmax(batch_labels))
-            predictions.append(np.argmax(output))
-
-        target_names = list(labels)
-
-        #tmp = [(t1, t2) for t1, t2 in zip(correct_labels[:30], predictions[:30])]
-        #print(tmp)
+        # compute the test accuracy
+        correct_labels, predictions = self._predict_labels(self.test_data)
         print('Accuracy:', accuracy_score(correct_labels, predictions))
-        print(classification_report(correct_labels, predictions, target_names=target_names))
-        print(confusion_matrix(correct_labels, predictions))
+        #print(classification_report(correct_labels, predictions, target_names=self.labels))
+        #print(confusion_matrix(correct_labels, predictions))
 
     def evaluate(self):
         """Test a classifier to label ASTs"""
-
-        with open(self.config.DATA_PATH, 'rb') as fh:
-            _, trees, labels = pickle.load(fh)
-            labels = [str(l) for l in labels]
-            trees = [{'tree': t['tree'], 'label': str(t['label'])} for t in trees]
-
-
-        with open(self.config.EMBEDDING_PATH, 'rb') as fh:
-            embeddings, embed_lookup = pickle.load(fh)
-            num_feats = len(embeddings[0])
-
-        # build the inputs and outputs of the network
-        nodes_node, children_node, hidden_node = network.init_net(
-            num_feats,
-            len(labels)
-        )
-        out_node = network.out_layer(hidden_node)
-
         # init the graph
-        sess = tf.Session()  # config=tf.ConfigProto(device_count={'GPU':0}))
-        sess.run(tf.global_variables_initializer())
-
         with tf.name_scope('saver'):
             saver = tf.train.Saver()
-            ckpt = tf.train.get_checkpoint_state(self.config.LOGDIR)
+            ckpt = tf.train.get_checkpoint_state(self.config.LOAD_PATH)
             if ckpt and ckpt.model_checkpoint_path:
-                saver.restore(sess, ckpt.model_checkpoint_path)
+                saver.restore(self.sess, ckpt.model_checkpoint_path)
             else:
                 raise Exception('Checkpoint not found.')
 
+        correct_labels, predictions = self._predict_labels(self.test_data)
+        print('Accuracy:', accuracy_score(correct_labels, predictions))
+        #print(classification_report(correct_labels, predictions, target_names=self.labels))
+        #print(confusion_matrix(correct_labels, predictions))
+
+    def _train_epoch(self, data, train_step, summaries, writer, epoch):
+        total_acc, total_loss, total = 0., 0., 0.
         correct_labels = []
-        # make predicitons from the input
         predictions = []
-        step = 0
+        for i, batch in enumerate(sampling.batch_samples(
+                sampling.gen_samples(data, self.labels, self.embedding, self.node_map),
+                self.config.BATCH_SIZE
+        )):
+            nodes, children, batch_labels = batch
+
+            if not nodes:
+                continue  # don't try to train on an empty batch
+
+            _, summary, err, out = self.sess.run(
+                [train_step, summaries, self.loss_node, self.out_node],
+                feed_dict={
+                    self.nodes_node: nodes,
+                    self.children_node: children,
+                    self.labels_node: batch_labels
+                }
+            )
+            output = self.sess.run([self.out_node],
+                              feed_dict={
+                                  self.nodes_node: nodes,
+                                  self.children_node: children,
+                              }
+                              )
+            correct_labels = np.argmax(batch_labels)
+            predictions = np.argmax(output)
+            total_acc += accuracy_score(correct_labels, predictions)
+            total_loss += err * len(batch_labels)
+            total += len(batch_labels)
+            writer.add_summary(summary, epoch)
+        return total_acc, total_loss, total
+
+
+    def _predict_labels(self, data):
+        correct_labels = []
+        predictions = []
         for batch in sampling.batch_samples(
-                sampling.gen_samples(trees, labels, embeddings, embed_lookup), 1
+                sampling.gen_samples(data, self.labels, self.embedding, self.node_map), 1
         ):
             nodes, children, batch_labels = batch
-            output = sess.run([out_node],
+            output = self.sess.run([self.out_node],
                               feed_dict={
-                                  nodes_node: nodes,
-                                  children_node: children,
+                                  self.nodes_node: nodes,
+                                  self.children_node: children,
                               }
                               )
             correct_labels.append(np.argmax(batch_labels))
             predictions.append(np.argmax(output))
-            step += 1
-            if step % 1000 == 0:
-                print(step, '/', len(trees))
-
-        target_names = list(labels)
-        print('Accuracy:', accuracy_score(correct_labels, predictions))
-        print(classification_report(correct_labels, predictions, target_names=target_names))
-        print(confusion_matrix(correct_labels, predictions))
+        return correct_labels, predictions

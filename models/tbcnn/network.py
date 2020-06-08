@@ -6,7 +6,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
 
-def init_net(feature_size, label_size, hidden_size = 200):
+def init_net(feature_size, label_size, hidden_size):
     """Initialize an empty network."""
 
     with tf.name_scope('inputs'):
