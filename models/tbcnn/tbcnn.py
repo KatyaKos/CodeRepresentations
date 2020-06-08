@@ -113,6 +113,9 @@ class TBCNN:
 
         with open(self.config.DATA_PATH, 'rb') as fh:
             _, trees, labels = pickle.load(fh)
+            labels = [str(l) for l in labels]
+            trees = [{'tree': t['tree'], 'label': str(t['label'])} for t in trees]
+
 
         with open(self.config.EMBEDDING_PATH, 'rb') as fh:
             embeddings, embed_lookup = pickle.load(fh)
@@ -154,7 +157,8 @@ class TBCNN:
             correct_labels.append(np.argmax(batch_labels))
             predictions.append(np.argmax(output))
             step += 1
-            print(step, '/', len(trees))
+            if step % 1000 == 0:
+                print(step, '/', len(trees))
 
         target_names = list(labels)
         print('Accuracy:', accuracy_score(correct_labels, predictions))
