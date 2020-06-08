@@ -7,12 +7,15 @@ The objective of this work is to apply a set of models (of different classes) an
 MODEL: \['astnn', 'tbcnn'\]; PARSER: \['pycparser'\]
 
 To preprocess the dataset (poj.pkl in tasks/classification/data):
+
 python run.py --preprocess -p PARSER -m MODEL -d DEST --raw_data PATH_TO_PKL -e DEST_EMBEDDING_FILE
 
 To train:
+
 python run.py -m MODEL -d PREPROCESSED_TREES_FILE -e EMBEDDING_FILE -s DEST_MODEL_DIR
 
 To evaluate:
+
 python run.py -m MODEL --evaluate -d PREPROCESSED_TREES_FILE -e EMBEDDING_FILE -l TRAINED_MODEL_DIR
 
 ## Current work:
