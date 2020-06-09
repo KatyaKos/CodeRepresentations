@@ -17,7 +17,7 @@ class TbcnnSampler(TreeSampler):
         }
 
         def constructor(node, node_json, depth):
-            num_nodes = 0
+            num_nodes = 1
             children = [x[1] for x in node.children()]
             d = depth
             for child in children:

@@ -5,20 +5,17 @@ from torch.autograd import Variable
 
 
 class BatchProgramClassifier(nn.Module):
-    # def __init__(self, embedding_dim, hidden_dim, vocab_size, encode_dim, label_size, batch_size, use_gpu=True, pretrained_weight=None):
     def __init__(self, embedding_dim, hidden_dim, vocab_size, encode_dim, label_size, batch_size, use_gpu=True, pretrained_weight=None):
         super(BatchProgramClassifier, self).__init__()
-        self.stop = [vocab_size-1]
         self.hidden_dim = hidden_dim
         self.num_layers = 1
         self.gpu = use_gpu
         self.batch_size = batch_size
-        self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.encode_dim = encode_dim
         self.label_size = label_size
         #class "BatchTreeEncoder"
-        self.encoder = BatchTreeEncoder(self.vocab_size, self.embedding_dim, self.encode_dim,
+        self.encoder = BatchTreeEncoder(vocab_size, self.embedding_dim, self.encode_dim,
                                         self.batch_size, self.gpu, pretrained_weight)
         self.root2label = nn.Linear(self.encode_dim, self.label_size)
         # gru
@@ -89,7 +86,6 @@ class BatchTreeEncoder(nn.Module):
         self.W_l = nn.Linear(encode_dim, encode_dim)
         self.W_r = nn.Linear(encode_dim, encode_dim)
         self.activation = F.relu
-        self.stop = -1
         self.batch_size = batch_size
         self.use_gpu = use_gpu
         self.node_list = []

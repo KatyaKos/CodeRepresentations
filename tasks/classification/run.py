@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import sys
-#sys.path.append('/home/')
+#sys.path.append('')
 
 
 if __name__ == '__main__':

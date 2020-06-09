@@ -12,16 +12,16 @@ class AstnnSampler:
             return result
 
         blocks = []
-        self._get_blocks(root, blocks)
+        num_nodes, depth = self._get_blocks(root, blocks)
         tree = []
         for b in blocks:
             btree = tree_to_index(b)
             tree.append(btree)
-        return tree
+        return tree, num_nodes, depth
 
     def _get_blocks(self, node, to):
         if self.parser.__name__ == 'pycparser':
-            self._get_pycparser_blocks(node, to)
+            return self._get_pycparser_blocks(node, to)
 
     def _get_block_children(self, node, token):
         if self.parser.__name__ == 'pycparser':
@@ -38,7 +38,8 @@ class AstnnSampler:
         else:
             return children
 
-    def _get_pycparser_blocks(self, node, to):
+    def _get_pycparser_blocks(self, node, to, depth=1):
+        d, num_nodes = depth, 1
         children = [c[1] for c in node.children()]
         name = node.__class__.__name__
         if name in ['FuncDef', 'If', 'For', 'While', 'DoWhile']:
@@ -52,14 +53,22 @@ class AstnnSampler:
                 child = children[i]
                 if child.__class__.__name__ not in ['FuncDef', 'If', 'For', 'While', 'DoWhile', 'Compound']:
                     to.append(child)
-                self._get_pycparser_blocks(child, to)
+                new_nodes, new_d = self._get_pycparser_blocks(child, to, depth + 1)
+                num_nodes += new_nodes
+                d = max(d, new_d)
         elif name is 'Compound':
             to.append(name)
             for child in children:
                 if child.__class__.__name__ not in ['If', 'For', 'While', 'DoWhile']:
                     to.append(child)
-                self._get_pycparser_blocks(child, to)
+                new_nodes, new_d = self._get_pycparser_blocks(child, to, depth + 1)
+                num_nodes += new_nodes
+                d = max(d, new_d)
             to.append('End')
         else:
             for _, child in node.children():
-                self._get_pycparser_blocks(child, to)
+                new_nodes, new_d = self._get_pycparser_blocks(child, to, depth + 1)
+                num_nodes += new_nodes
+                d = max(d, new_d)
+        return num_nodes, d
+

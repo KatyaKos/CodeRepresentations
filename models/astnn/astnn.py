@@ -12,9 +12,9 @@ from models.model import CodeRepresentationModel
 class ASTNN(CodeRepresentationModel):
     def __init__(self, config):
         super().__init__(config)
-        self.model = BatchProgramClassifier(config.EMBEDDING_DIM, config.HIDDEN_DIM, config.MAX_TOKENS + 1,
+        self.model = BatchProgramClassifier(self.EMBEDDING_DIM, config.HIDDEN_DIM, len(self.embedding),
                                             config.ENCODE_DIM, config.LABELS, config.BATCH_SIZE,
-                                            config.USE_GPU, config.embeddings)
+                                            config.USE_GPU, self.embedding)
         if config.LOAD_PATH:
             self.load()
         else:
@@ -24,7 +24,7 @@ class ASTNN(CodeRepresentationModel):
             self.optimizer = torch.optim.Adamax(parameters)
             self.loss_function = torch.nn.CrossEntropyLoss()
 
-        self.label_lookup = {label: self._onehot(i, self.labels_size) for i, label in enumerate(self.labels)}
+        self.label_lookup = {label: i for i, label in enumerate(self.labels)}
 
     def save(self):
         torch.save({
@@ -63,6 +63,7 @@ class ASTNN(CodeRepresentationModel):
             end_time = time.time()
             if total_acc/total > best_acc:
                 best_model = self.model
+                best_acc = total_acc
             print('[Epoch: %3d/%3d] Training Loss: %.4f, Validation Loss: %.4f,'
                   ' Training Acc: %.3f, Validation Acc: %.3f, Time Cost: %.3f s'
                   % (epoch + 1, self.config.EPOCHS, train_loss_[epoch], val_loss_[epoch],
@@ -128,7 +129,6 @@ class ASTNN(CodeRepresentationModel):
             self.model.batch_size = len(labels)
             self.model.hidden = self.model.init_hidden()
             output = self.model(inputs)
-
             loss = self.loss_function(output, Variable(labels))
             if is_train:
                 loss.backward()

@@ -8,7 +8,7 @@ class Config:
         config.HIDDEN_DIM = 100
         config.ENCODE_DIM = 128
         config.LABELS = 104
-        config.EPOCHS = 15
+        config.EPOCHS = 10
         config.BATCH_SIZE = 64
         config.USE_GPU = False
         return config
@@ -16,7 +16,6 @@ class Config:
     def __init__(self, args):
         self.HIDDEN_DIM = 0
         self.ENCODE_DIM = 0
-        self.MAX_TOKENS = 0
         self.LABELS = 0
         self.EPOCHS = 0
         self.BATCH_SIZE = 0
@@ -26,6 +25,5 @@ class Config:
         self.EMBEDDING_PATH = args.embed_path
         self.SAVE_PATH = args.save_path
         self.LOAD_PATH = args.load_path
-        self.LOGDIR = args.logdir
         self.PREDICT_PATH = args.predict_path
 

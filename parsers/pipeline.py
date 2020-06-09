@@ -107,7 +107,9 @@ class PreprocessPipeline:
                 labels.add(label)
                 df_new.append(datum)
 
-            df_new = pd.DataFrame(df_new, columns=['id', 'code', 'label'])
+        train = pd.DataFrame(train, columns=['id', 'code', 'label'])
+        val = pd.DataFrame(val, columns=['id', 'code', 'label'])
+        test = pd.DataFrame(test, columns=['id', 'code', 'label'])   
 
         labels = list(labels)
         with open(output_path, 'wb') as fout:
