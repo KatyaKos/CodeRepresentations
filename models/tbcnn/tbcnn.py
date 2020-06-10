@@ -1,13 +1,10 @@
-"""Train the cnn model as  described in Lili Mou et al. (2015)
-https://arxiv.org/pdf/1409.5718.pdf"""
-
 import os
 import time
 
 import numpy as np
 import models.tbcnn.network as network
 import models.tbcnn.sampling as sampling
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -33,7 +30,7 @@ class TBCNN(CodeRepresentationModel):
         # build the inputs and outputs of the network
         self.labels_node, self.loss_node = network.loss_layer(self.hidden_node, self.LABELS_SIZE)
         optimizer = tf.train.AdamOptimizer(self.config.LEARN_RATE)
-        train_step = optimizer.minimize(self.loss_node)
+        optimizer_step = optimizer.minimize(self.loss_node)
         tf.summary.scalar('loss', self.loss_node)
 
         # init the graph
@@ -52,11 +49,11 @@ class TBCNN(CodeRepresentationModel):
         for epoch in range(self.config.EPOCHS):
             start_time = time.time()
 
-            total_loss, total_acc, total = self._train_epoch(self.train_data, train_step, summaries, writer, epoch)
+            total_loss, total_acc, total = self._train_epoch(self.train_data, epoch, optimizer_step, summaries, writer)
             train_loss_.append(total_loss / total)
             train_acc_.append(total_acc / total)
 
-            total_loss, total_acc, total = self._train_epoch(self.val_data, train_step, summaries, writer, epoch)
+            total_loss, total_acc, total = self._train_epoch(self.val_data, epoch)
             val_loss_.append(total_loss / total)
             val_acc_.append(total_acc / total)
 
@@ -96,10 +93,8 @@ class TBCNN(CodeRepresentationModel):
         #print(classification_report(correct_labels, predictions, target_names=self.labels))
         #print(confusion_matrix(correct_labels, predictions))
 
-    def _train_epoch(self, data, train_step, summaries, writer, epoch):
+    def _train_epoch(self, data, epoch, optimizer_step=None, summaries=None, writer=None):
         total_acc, total_loss, total = 0., 0., 0.
-        correct_labels = []
-        predictions = []
         for i, batch in enumerate(sampling.batch_samples(
                 sampling.gen_samples(data, self.labels, self.embedding, self.node_map),
                 self.config.BATCH_SIZE
@@ -109,28 +104,31 @@ class TBCNN(CodeRepresentationModel):
             if not nodes:
                 continue  # don't try to train on an empty batch
 
-            _, summary, err, out = self.sess.run(
-                [train_step, summaries, self.loss_node, self.out_node],
-                feed_dict={
-                    self.nodes_node: nodes,
-                    self.children_node: children,
-                    self.labels_node: batch_labels
-                }
-            )
-            output = self.sess.run([self.out_node],
-                              feed_dict={
-                                  self.nodes_node: nodes,
-                                  self.children_node: children,
-                              }
-                              )[0]
+            if optimizer_step:
+                _, summary, err, output = self.sess.run(
+                    [optimizer_step, summaries, self.loss_node, self.out_node],
+                    feed_dict={
+                        self.nodes_node: nodes,
+                        self.children_node: children,
+                        self.labels_node: batch_labels
+                    }
+                )
+                writer.add_summary(summary, epoch)
+            else:
+                err, output = self.sess.run(
+                    [self.loss_node, self.out_node],
+                    feed_dict={
+                        self.nodes_node: nodes,
+                        self.children_node: children,
+                        self.labels_node: batch_labels
+                    }
+                )
             correct_labels = np.argmax(batch_labels, axis=1)
-            predictions = np.argmax(output, axis=1)                        
+            predictions = np.argmax(output[0], axis=1)
             total_acc += accuracy_score(correct_labels, predictions, normalize=False)
             total_loss += err * len(batch_labels)
             total += len(batch_labels)
-            writer.add_summary(summary, epoch)
         return total_loss, total_acc, total
-
 
     def _predict_labels(self, data):
         total_acc, total = 0., 0.

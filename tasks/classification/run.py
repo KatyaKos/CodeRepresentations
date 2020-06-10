@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 import numpy as np
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
+import tensorflow as tf
 import sys
 #sys.path.append('')
 
@@ -31,7 +30,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     np.random.seed(args.seed)
-    tf.set_random_seed(args.seed)
+    tf.random.set_seed(args.seed)
 
     config, model, preprocess_pipe = None, None, None
 
