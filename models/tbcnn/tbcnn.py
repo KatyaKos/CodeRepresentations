@@ -124,7 +124,7 @@ class TBCNN(CodeRepresentationModel):
                     }
                 )
             correct_labels = np.argmax(batch_labels, axis=1)
-            predictions = np.argmax(output[0], axis=1)
+            predictions = np.argmax(output, axis=1)
             total_acc += accuracy_score(correct_labels, predictions, normalize=False)
             total_loss += err * len(batch_labels)
             total += len(batch_labels)
