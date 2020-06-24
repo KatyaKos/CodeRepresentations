@@ -40,6 +40,10 @@ if __name__ == '__main__':
             from parsers.pycparser import config, pycparser
             conf = config.Config.get_config(args)
             pars = pycparser.PyCParser()
+        elif args.parser == 'tree-sitter':
+            from parsers.tree_sitter import config, tree_sitter
+            conf = config.Config.get_config(args)
+            pars = tree_sitter.TreeSitter()
         else:
             raise Exception("No such parser")
         tree_sampler = None

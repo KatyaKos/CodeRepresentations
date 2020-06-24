@@ -13,7 +13,7 @@ class TreeSitter:
         LANGUAGE = Language(LANGUAGE_PATH, LANGUAGE_NAME)
         self.parser = Parser()
         self.parser.set_language(LANGUAGE)
-        self.__name__ = 'tree-sitter'
+        self.__name__ = 'tree_sitter'
 
     def parse_code(self, code):
         return self.parser.parse(bytes(code), "utf8")
