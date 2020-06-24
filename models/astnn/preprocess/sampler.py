@@ -1,6 +1,9 @@
-class AstnnSampler:
+from models.tree_sampler import TreeSampler
+
+
+class AstnnSampler(TreeSampler):
     def __init__(self, parser):
-        self.parser = parser
+        super().__init__(parser)
 
     def sample(self, root, node_map, unk_token):
         def tree_to_index(node):
