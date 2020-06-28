@@ -14,6 +14,9 @@ class PyCParser:
             return []
         return [x[1] for x in node.children()]
 
+    def get_root(self, ast):
+        return ast
+
     def get_token(self, node, lower=True):
         if isinstance(node, str):
             return node

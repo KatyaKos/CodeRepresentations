@@ -5,6 +5,9 @@ class Parser:
     def parse_code(self, code):
         return None
 
+    def get_root(self, ast):
+        return None
+
     def get_children(self, node):
         return []
 

@@ -5,8 +5,8 @@ To use this parser, please, init $LANGUAGE_PATH and $LANGUAGE_NAME.
 For example: LANGUAGE_PATH='/user/build/my-languages.so' and LANGUAGE_NAME='go'.
 More info: https://pypi.org/project/tree-sitter/
 '''
-LANGUAGE_PATH = ''
-LANGUAGE_NAME = ''
+LANGUAGE_PATH = '/home/ec2-user/research/tree-sitter_parser/build/my-languages.so'
+LANGUAGE_NAME = 'c'
 
 class TreeSitter:
     def __init__(self):
@@ -16,7 +16,10 @@ class TreeSitter:
         self.__name__ = 'tree_sitter'
 
     def parse_code(self, code):
-        return self.parser.parse(bytes(code), "utf8")
+        return self.parser.parse(bytes(code, "utf8"))
+
+    def get_root(self, ast):
+        return ast.root_node
 
     def get_children(self, node):
         if isinstance(node, str):

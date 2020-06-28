@@ -43,8 +43,8 @@ class PreprocessPipeline:
         self.train_sources = source.iloc[:train_split]
         self.val_sources = source.iloc[train_split:val_split]
         self.test_sources = source.iloc[val_split:]
-        with open(path, 'wb') as fout:
-            pickle.dump((self.train_sources, self.val_sources, self.test_sources), fout)
+        #with open(path, 'wb') as fout:
+        #    pickle.dump((self.train_sources, self.val_sources, self.test_sources), fout)
 
     # construct nodes dictionary and train word embedding
     def vectorize_nodes(self, input_file=None, option='existing'):
@@ -64,12 +64,12 @@ class PreprocessPipeline:
             to.append(current_token)
             for child in self.parser.get_children(root):
                 sample_node_sequences(child, to)
-            if current_token.lower() == 'compound':
-                to.append('End')
+            #if current_token.lower() == 'compound':
+            #    to.append('End')
 
         def trans_to_sequences(ast):
             sequence = []
-            sample_node_sequences(ast, sequence)
+            sample_node_sequences(self.parser.get_root(ast), sequence)
             return sequence
 
         corpus = trees['code'].apply(trans_to_sequences)
@@ -99,8 +99,8 @@ class PreprocessPipeline:
         for df_old, df_new in [(self.train_sources, train),
                                (self.val_sources, val),
                                (self.test_sources, test)]:
-            for id, root, label in zip(df_old['id'], df_old['code'], df_old['label']):
-                sample, num_nodes, depth = self.tree_sampler.sample(root, self.node_map, self.config.UNK_NODE)
+            for id, ast, label in zip(df_old['id'], df_old['code'], df_old['label']):
+                sample, num_nodes, depth = self.tree_sampler.sample(self.parser.get_root(ast), self.node_map, self.config.UNK_NODE)
                 if num_nodes > self.config.MAX_TREE_SIZE or num_nodes < self.config.MIN_TREE_SIZE or depth > self.config.MAX_DEPTH:
                     continue
                 datum = [id, sample, label]
