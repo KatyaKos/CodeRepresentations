@@ -64,8 +64,8 @@ class PreprocessPipeline:
             to.append(current_token)
             for child in self.parser.get_children(root):
                 sample_node_sequences(child, to)
-            #if current_token.lower() == 'compound':
-            #    to.append('End')
+            if current_token is self.parser.STATEMENTS['compound']:
+                to.append(self.parser.STATEMENTS['end'])
 
         def trans_to_sequences(ast):
             sequence = []

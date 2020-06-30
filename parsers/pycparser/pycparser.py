@@ -1,18 +1,46 @@
 from pycparser import c_parser
 
+from parsers.parser import Parser
 
-class PyCParser:
+
+class PyCParser(Parser):
     def __init__(self):
+        super().__init__()
         self.parser = c_parser.CParser()
+
         self.__name__ = 'pycparser'
+        self.__fill_statements__()
+
+    def __fill_statements__(self):
+        self.STATEMENTS["compound"] = "Compound"
+        self.STATEMENTS["for"] = "For"
+        self.STATEMENTS["if"] = "If"
+        self.STATEMENTS["while"] = "While"
+        self.STATEMENTS["func_def"] = "FuncDef"
+        self.STATEMENTS["do_while"] = "DoWhile"
 
     def parse_code(self, code):
         return self.parser.parse(code)
 
-    def get_children(self, node):
+    def get_children(self, node, mode='all'):
         if isinstance(node, str):
             return []
-        return [x[1] for x in node.children()]
+        if mode == 'all':
+            return [x[1] for x in node.children()]
+        token = self.get_token(node)
+        children = [child for _, child in node.children()]
+        if token in ['FuncDef', 'If', 'While', 'DoWhile', 'Switch']:
+            if mode == 'non_block':
+                return [children[0]]
+            elif mode == 'block':
+                return children[1:]
+        elif token == 'For':
+            if mode == 'non_block':
+                return children[:len(children) - 1]
+            elif mode == 'block':
+                return [children[-1]]
+        else:
+            return children
 
     def get_root(self, ast):
         return ast
