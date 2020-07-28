@@ -1,0 +1,19 @@
+{
+  "paths": {
+    "data_file": "",
+    "embedding_file": "",
+    "destination_dir": "",
+    "load_dir": "",
+    "predict_file": ""
+  },
+  "dims": {
+    "hidden" : 100,
+    "encode" : 128
+  },
+  "batch_size" : 64,
+  "epochs" : 10,
+  "use_gpu" : "False",
+
+  "model" : "astnn"
+}
+

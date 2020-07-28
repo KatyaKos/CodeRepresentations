@@ -1,4 +1,8 @@
 class Parser:
+    @staticmethod
+    def name():
+        return ""
+
     def __init__(self):
         self.STATEMENTS = {"compound" : "", "end" : "End",
                            "for" : "", "if" : "", "while" : "", "func_def" : "", "do_while" : ""}

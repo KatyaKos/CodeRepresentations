@@ -1,16 +1,20 @@
-from models.tree_sampler import TreeSampler
+from preprocessing.samplers.tree_sampler import TreeSampler
 
 
-class AstnnSampler(TreeSampler):
-    def __init__(self, parser):
-        super().__init__(parser)
+class TreeAstnnSampler(TreeSampler):
+    def __init__(self, parser, node_map, max_tree_size, min_tree_size, max_depth, unknown_node):
+        super().__init__(parser, node_map, max_tree_size, min_tree_size, max_depth, unknown_node)
         self.BASIC_STATEMENTS = [self.STATEMENTS['if'], self.STATEMENTS['for'],
                                  self.STATEMENTS['while'], self.STATEMENTS['do_while']]
 
-    def sample(self, root, node_map, unk_token):
+    @staticmethod
+    def name():
+        return "astnn_like"
+
+    def sample(self, root):
         def tree_to_index(node):
             token = self.parser.get_token(node)
-            result = [node_map[token] if token in node_map else node_map[unk_token]]
+            result = [self.node_map[token] if token in self.node_map else self.node_map[self.unknown_node]]
             children = self.parser.get_non_block_children(node)
             for child in children:
                 result.append(tree_to_index(child))
@@ -56,5 +60,3 @@ class AstnnSampler(TreeSampler):
                 num_nodes += new_nodes
                 d = max(d, new_d)
         return num_nodes, d
-
-

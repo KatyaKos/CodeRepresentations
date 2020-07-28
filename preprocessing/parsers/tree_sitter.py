@@ -1,6 +1,5 @@
 from tree_sitter import Language, Parser
-
-from parsers import parser
+from preprocessing.parsers import parser
 
 '''
 To use this parser, please, init $LANGUAGE_PATH and $LANGUAGE_NAME.
@@ -12,13 +11,15 @@ LANGUAGE_NAME = 'c'
 
 
 class TreeSitter(parser.Parser):
+    @staticmethod
+    def name():
+        return "tree_sitter"
+
     def __init__(self):
         super().__init__()
         LANGUAGE = Language(LANGUAGE_PATH, LANGUAGE_NAME)
         self.parser = Parser()
         self.parser.set_language(LANGUAGE)
-
-        self.__name__ = 'tree_sitter'
         self.__fill_statements__()
 
     def __fill_statements__(self):

@@ -1,0 +1,27 @@
+{
+  "paths": {
+    "data_file": "",
+    "embedding_file": "",
+    "destination_file": ""
+  },
+
+  "components": {
+    "iof": "pickle",
+    "splitter": "basic",
+    "vectorizer": "word2vec",
+    "node_sampler": "basic",
+    "tree_sampler": "basic"
+  },
+
+  "parser": "pycparser",
+
+  "unknow_node": "<UNKNOWN_NODE>",
+  "mode": "existing",
+  "split_ratio": "3:1:1",
+
+  "embedding_dim": 128,
+  "min_count": 3,
+  "max_tree_size": 10000,
+  "min_tree_size": 3,
+  "max_depth": 350
+}

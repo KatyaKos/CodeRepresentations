@@ -1,0 +1,18 @@
+{
+  "paths": {
+    "data_file": "",
+    "embedding_file": "",
+    "destination_dir": "",
+    "load_dir": "",
+    "predict_file": ""
+  },
+  "dims": {
+    "hidden" : 128
+  },
+  "batch_size" : 30,
+  "epochs" : 10,
+  "learn_rate" : 0.001,
+
+  "model" : "tbcnn"
+}
+

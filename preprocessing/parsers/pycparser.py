@@ -1,14 +1,15 @@
 from pycparser import c_parser
-
-from parsers.parser import Parser
+from preprocessing.parsers.parser import Parser
 
 
 class PyCParser(Parser):
+    @staticmethod
+    def name():
+        return "pycparser"
+
     def __init__(self):
         super().__init__()
         self.parser = c_parser.CParser()
-
-        self.__name__ = 'pycparser'
         self.__fill_statements__()
 
     def __fill_statements__(self):
