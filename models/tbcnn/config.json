@@ -1,10 +1,13 @@
 {
   "paths": {
-    "data_file": "",
-    "embedding_file": "",
-    "destination_dir": "",
-    "load_dir": "",
-    "predict_file": ""
+    "train_path": "preprocessing/data/preprocessed/tbcnn/trees_train.pkl",
+    "test_path": "preprocessing/data/preprocessed/tbcnn/trees_test.pkl",
+    "val_path": "preprocessing/data/preprocessed/tbcnn/trees_val.pkl",
+    "labels_file": "preprocessing/data/preprocessed/labels.pkl",
+    "embedding_file": "preprocessing/data/preprocessed/vectors.pkl",
+
+    "save_path": "tasks/classification/data/tbcnn",
+    "load_path": null
   },
   "dims": {
     "hidden" : 128
@@ -13,6 +16,7 @@
   "epochs" : 10,
   "learn_rate" : 0.001,
 
+  "data_loader" : "pandas_pickle",
   "model" : "tbcnn"
 }
 

@@ -1,18 +1,20 @@
+from typing import List
+
 from tree_sitter import Language, Parser
-from preprocessing.parsers import parser
+from preprocessing.ast_builders import parser
 
 '''
 To use this parser, please, init $LANGUAGE_PATH and $LANGUAGE_NAME.
 For example: LANGUAGE_PATH='/user/build/my-languages.so' and LANGUAGE_NAME='go'.
 More info: https://pypi.org/project/tree-sitter/
 '''
-LANGUAGE_PATH = '/home/ec2-user/research/tree-sitter_parser/build/my-languages.so'
+LANGUAGE_PATH = 'ast_builders/parsers/build/my-languages.so'
 LANGUAGE_NAME = 'c'
 
 
 class TreeSitter(parser.Parser):
     @staticmethod
-    def name():
+    def name() -> str:
         return "tree_sitter"
 
     def __init__(self):
@@ -30,13 +32,18 @@ class TreeSitter(parser.Parser):
         self.STATEMENTS["func_def"] = "function_definition"
         self.STATEMENTS["do_while"] = "do_statement"
 
-    def parse_code(self, code):
+    def parse_code(self, code: str):
         return self.parser.parse(bytes(code, "utf8"))
+
+    def parse_file(self, filename: str):
+        with open(filename, 'rb') as fin:
+            code = fin.read()
+            return self.parser.parse(code)
 
     def get_root(self, ast):
         return ast.root_node
 
-    def get_children(self, node, mode='all'):
+    def get_children(self, node, mode: str = 'all') -> List:
         if isinstance(node, str):
             return []
         if mode == 'all':
@@ -56,7 +63,7 @@ class TreeSitter(parser.Parser):
         else:
             return children
 
-    def get_token(self, node):
+    def get_token(self, node) -> str:
         if isinstance(node, str):
             return node
         token = node.type

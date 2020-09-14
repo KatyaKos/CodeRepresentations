@@ -1,3 +1,4 @@
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
@@ -5,7 +6,8 @@ from torch.autograd import Variable
 
 
 class BatchProgramClassifier(nn.Module):
-    def __init__(self, embedding_dim, hidden_dim, vocab_size, encode_dim, label_size, batch_size, use_gpu=True, pretrained_weight=None):
+    def __init__(self, embedding_dim: int, hidden_dim: int, vocab_size: int, encode_dim: int,
+                 label_size: int, batch_size: int, use_gpu: bool=True, pretrained_weight: np.ndarray =None):
         super(BatchProgramClassifier, self).__init__()
         self.hidden_dim = hidden_dim
         self.num_layers = 1
@@ -77,7 +79,8 @@ class BatchProgramClassifier(nn.Module):
 
 
 class BatchTreeEncoder(nn.Module):
-    def __init__(self, vocab_size, embedding_dim, encode_dim, batch_size, use_gpu, pretrained_weight=None):
+    def __init__(self, vocab_size: int, embedding_dim: int, encode_dim: int, batch_size: int,
+                 use_gpu: bool, pretrained_weight: np.ndarray =None):
         super(BatchTreeEncoder, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.embedding_dim = embedding_dim

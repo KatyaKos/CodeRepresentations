@@ -1,10 +1,12 @@
-from pycparser import c_parser
-from preprocessing.parsers.parser import Parser
+from typing import List
+
+from pycparser import c_parser, parse_file
+from preprocessing.ast_builders.parser import Parser
 
 
 class PyCParser(Parser):
     @staticmethod
-    def name():
+    def name() -> str:
         return "pycparser"
 
     def __init__(self):
@@ -20,10 +22,16 @@ class PyCParser(Parser):
         self.STATEMENTS["func_def"] = "FuncDef"
         self.STATEMENTS["do_while"] = "DoWhile"
 
-    def parse_code(self, code):
-        return self.parser.parse(code)
+    def parse_code(self, code: str):
+        #return self.parser.parse(code)
+        parser = c_parser.CParser()
+        asp = parser.parse(code)
 
-    def get_children(self, node, mode='all'):
+
+    def parse_file(self, filename: str):
+        return parse_file(filename, use_cpp=True)
+
+    def get_children(self, node, mode: str='all') -> List:
         if isinstance(node, str):
             return []
         if mode == 'all':
@@ -46,7 +54,7 @@ class PyCParser(Parser):
     def get_root(self, ast):
         return ast
 
-    def get_token(self, node, lower=True):
+    def get_token(self, node, lower: bool =True) -> str:
         if isinstance(node, str):
             return node
         name = node.__class__.__name__
@@ -80,7 +88,7 @@ class PyCParser(Parser):
             token = token.lower()
         return token
 
-    def is_leaf(self, node):
+    def is_leaf(self, node) -> bool:
         if isinstance(node, str):
             return True
         return len(node.children()) == 0

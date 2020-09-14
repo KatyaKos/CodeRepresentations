@@ -12,24 +12,25 @@ from models.model import CodeRepresentationModel
 
 
 class TBCNN(CodeRepresentationModel):
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, params):
+        super().__init__(params)
         # build the inputs and outputs of the network
         self.nodes_node, self.children_node, self.hidden_node = network.init_net(
             self.EMBEDDING_DIM,
             self.LABELS_SIZE,
-            config.HIDDEN_SIZE
+            params['dims']['hidden']
         )
         self.out_node = network.out_layer(self.hidden_node)
         self.labels_node, self.loss_node = None, None
         self.sess = tf.Session()
 
+        self.batch_size = params['batch_size']
 
     def train(self):
         """Train a classifier to label ASTs"""
         # build the inputs and outputs of the network
         self.labels_node, self.loss_node = network.loss_layer(self.hidden_node, self.LABELS_SIZE)
-        optimizer = tf.train.AdamOptimizer(self.config.LEARN_RATE)
+        optimizer = tf.train.AdamOptimizer(self.params['learn_rate'])
         optimizer_step = optimizer.minimize(self.loss_node)
         tf.summary.scalar('loss', self.loss_node)
 
@@ -38,15 +39,16 @@ class TBCNN(CodeRepresentationModel):
         with tf.name_scope('saver'):
             saver = tf.train.Saver()
             summaries = tf.summary.merge_all()
-            writer = tf.summary.FileWriter(self.config.SAVE_PATH, self.sess.graph)
+            writer = tf.summary.FileWriter(self.params['paths']['save_path'], self.sess.graph)
 
-        checkfile = os.path.join(self.config.SAVE_PATH, 'cnn_tree.ckpt')
+        checkfile = os.path.join(self.params['paths']['save_path'], 'cnn_tree.ckpt')
 
         train_loss_, val_loss_, train_acc_, val_acc_ = [], [], [], []
         best_acc = 0.0
         print('Start training...')
         best_sess = self.sess
-        for epoch in range(self.config.EPOCHS):
+        total_epochs = self.params['epochs']
+        for epoch in range(total_epochs):
             start_time = time.time()
 
             total_loss, total_acc, total = self._train_epoch(self.train_data, epoch, optimizer_step, summaries, writer)
@@ -63,13 +65,13 @@ class TBCNN(CodeRepresentationModel):
                 best_acc = total_acc
             print('[Epoch: %3d/%3d] Training Loss: %.4f, Validation Loss: %.4f,'
                   ' Training Acc: %.3f, Validation Acc: %.3f, Time Cost: %.3f s'
-                  % (epoch + 1, self.config.EPOCHS, train_loss_[epoch], val_loss_[epoch],
+                  % (epoch + 1, total_epochs, train_loss_[epoch], val_loss_[epoch],
                      train_acc_[epoch], val_acc_[epoch], end_time - start_time))
 
             saver.save(self.sess, os.path.join(checkfile), epoch)
 
         self.sess = best_sess
-        saver.save(self.sess, os.path.join(checkfile), self.config.EPOCHS)
+        saver.save(self.sess, os.path.join(checkfile), total_epochs)
 
         # compute the test accuracy
         total_acc = self._predict_labels(self.test_data)
@@ -82,7 +84,7 @@ class TBCNN(CodeRepresentationModel):
         # init the graph
         with tf.name_scope('saver'):
             saver = tf.train.Saver()
-            ckpt = tf.train.get_checkpoint_state(self.config.LOAD_PATH)
+            ckpt = tf.train.get_checkpoint_state(self.params['paths']['load_path'])
             if ckpt and ckpt.model_checkpoint_path:
                 saver.restore(self.sess, ckpt.model_checkpoint_path)
             else:
@@ -96,8 +98,8 @@ class TBCNN(CodeRepresentationModel):
     def _train_epoch(self, data, epoch, optimizer_step=None, summaries=None, writer=None):
         total_acc, total_loss, total = 0., 0., 0.
         for i, batch in enumerate(sampling.batch_samples(
-                sampling.gen_samples(data, self.labels, self.embedding, self.node_map),
-                self.config.BATCH_SIZE
+                sampling.gen_samples(data, self.labels, self.embedding),
+                self.batch_size
         )):
             nodes, children, batch_labels = batch
 
@@ -133,7 +135,7 @@ class TBCNN(CodeRepresentationModel):
     def _predict_labels(self, data):
         total_acc, total = 0., 0.
         for batch in sampling.batch_samples(
-                sampling.gen_samples(data, self.labels, self.embedding, self.node_map), self.config.BATCH_SIZE
+                sampling.gen_samples(data, self.labels, self.embedding), self.batch_size
         ):
             nodes, children, batch_labels = batch
             output = self.sess.run([self.out_node],

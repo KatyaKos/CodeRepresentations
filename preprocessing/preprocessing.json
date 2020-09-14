@@ -1,27 +1,34 @@
 {
   "paths": {
-    "data_file": "",
-    "embedding_file": "",
-    "destination_file": ""
+    "train_data": "data/ProgramData/train",
+    "val_data": "data/ProgramData/val",
+    "test_data": "data/ProgramData/test",
+    "embedding_dir": "data/preprocessed",
+    "destination_dir": "data/preprocessed"
   },
-
-  "components": {
-    "iof": "pickle",
-    "splitter": "basic",
-    "vectorizer": "word2vec",
-    "node_sampler": "basic",
-    "tree_sampler": "basic"
-  },
-
-  "parser": "pycparser",
-
-  "unknow_node": "<UNKNOWN_NODE>",
-  "mode": "existing",
-  "split_ratio": "3:1:1",
 
   "embedding_dim": 128,
   "min_count": 3,
   "max_tree_size": 10000,
   "min_tree_size": 3,
-  "max_depth": 350
+  "max_depth": 350,
+  "batch_size": 200,
+
+  "components": {
+    "data_worker": "pandas",
+    "vectorizer": "word2vec",
+    "node_sampler": "basic",
+    "tree_sampler": "basic"
+  },
+
+  "parser": "tree_sitter",
+  "unknown_node": "<UNKNOWN_NODE>",
+
+  "filenames": {
+    "embedding_file": "vectors",
+    "train_file": "trees_train",
+    "val_file": "trees_val",
+    "test_file": "trees_test",
+    "labels_file": "labels"
+  }
 }
